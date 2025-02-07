@@ -11,13 +11,6 @@ const double _kDefaultWidth = 500.0;
 const double _kDefaultHeight = 3000.0;
 
 /// Creates an image from the given widget.
-///
-/// The [context] parameter represents the build context.
-/// The [widget] parameter is the widget to create an image from.
-/// The [docWidth] parameter (optional) specifies the width of the document. Default is [_kDefaultWidth].
-/// The [docHeight] parameter (optional) specifies the height of the document. Default is [_kDefaultHeight].
-///
-/// Returns a [Future] that completes with a [Uint8List] containing the image data.
 Future<Uint8List> createImageFromWidget(
   BuildContext context,
   Widget widget, {
@@ -28,7 +21,8 @@ Future<Uint8List> createImageFromWidget(
 
   final BuildOwner buildOwner = BuildOwner(focusManager: FocusManager());
 
-  final RenderObjectToWidgetElement<RenderBox> rootElement = RenderObjectToWidgetAdapter<RenderBox>(
+  final RenderObjectToWidgetElement<RenderBox> rootElement =
+      RenderObjectToWidgetAdapter<RenderBox>(
     container: repaintBoundary,
     child: Directionality(
       textDirection: TextDirection.ltr,
@@ -47,17 +41,22 @@ Future<Uint8List> createImageFromWidget(
     ..buildScope(rootElement)
     ..finalizeTree();
 
+  // الحصول على FlutterView من السياق (قد يختلف على إصدارات مختلفة):
   ui.FlutterView view = View.of(context);
 
   final RenderView renderView = RenderView(
+    // في Flutter 3.10+ ما زال يمكن تمرير view:
     view: view,
     child: RenderPositionedBox(
       alignment: Alignment.center,
       child: repaintBoundary,
     ),
     configuration: ViewConfiguration(
-      size: Size(docWidth, docHeight),
+      // استبدل size بـ geometry:
+      geometry: Rect.fromLTWH(0, 0, docWidth, docHeight),
       devicePixelRatio: view.devicePixelRatio,
+      // قد يطلب منك أحيانًا إضافة window: view إذا كانت نسختك الأحدث جدًا
+      // window: view,
     ),
   );
 
@@ -72,7 +71,5 @@ Future<Uint8List> createImageFromWidget(
   ui.Image image = await repaintBoundary.toImage(pixelRatio: view.devicePixelRatio);
   ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
-  Uint8List? result = byteData?.buffer.asUint8List();
-
-  return result!;
+  return byteData!.buffer.asUint8List();
 }
