@@ -11,6 +11,13 @@ const double _kDefaultWidth = 500.0;
 const double _kDefaultHeight = 3000.0;
 
 /// Creates an image from the given widget.
+///
+/// The [context] parameter represents the build context.
+/// The [widget] parameter is the widget to create an image from.
+/// The [docWidth] parameter (optional) specifies the width of the document. Default is [_kDefaultWidth].
+/// The [docHeight] parameter (optional) specifies the height of the document. Default is [_kDefaultHeight].
+///
+/// Returns a [Future] that completes with a [Uint8List] containing the image data.
 Future<Uint8List> createImageFromWidget(
   BuildContext context,
   Widget widget, {
@@ -21,6 +28,7 @@ Future<Uint8List> createImageFromWidget(
 
   final BuildOwner buildOwner = BuildOwner(focusManager: FocusManager());
 
+  // نُنشئ شجرة الودجت برأٍس repaintBoundary
   final RenderObjectToWidgetElement<RenderBox> rootElement =
       RenderObjectToWidgetAdapter<RenderBox>(
     container: repaintBoundary,
@@ -41,25 +49,27 @@ Future<Uint8List> createImageFromWidget(
     ..buildScope(rootElement)
     ..finalizeTree();
 
-  // الحصول على FlutterView من السياق (قد يختلف على إصدارات مختلفة):
+  // الحصول على الـ FlutterView المرتبط بهذا الـ context
   ui.FlutterView view = View.of(context);
 
+  // تهيئة RenderView مع استبدال size: بـ geometry:
   final RenderView renderView = RenderView(
-    // في Flutter 3.10+ ما زال يمكن تمرير view:
     view: view,
     child: RenderPositionedBox(
       alignment: Alignment.center,
       child: repaintBoundary,
     ),
     configuration: ViewConfiguration(
-      // استبدل size بـ geometry:
+      // استخدم geometry بدلًا من size
       geometry: Rect.fromLTWH(0, 0, docWidth, docHeight),
       devicePixelRatio: view.devicePixelRatio,
-      // قد يطلب منك أحيانًا إضافة window: view إذا كانت نسختك الأحدث جدًا
-      // window: view,
+
+      // بعض إصدارات Flutter قد تتطلّب وجود window
+      window: view,
     ),
   );
 
+  // PipelineOwner لإدارة مرحلة البناء والطلاء
   final PipelineOwner pipelineOwner = PipelineOwner()..rootNode = renderView;
   renderView.prepareInitialFrame();
 
@@ -68,8 +78,11 @@ Future<Uint8List> createImageFromWidget(
     ..flushCompositingBits()
     ..flushPaint();
 
-  ui.Image image = await repaintBoundary.toImage(pixelRatio: view.devicePixelRatio);
+  // تحويل repaintBoundary إلى صورة
+  ui.Image image =
+      await repaintBoundary.toImage(pixelRatio: view.devicePixelRatio);
   ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
 
+  // إرجاعها في شكل Uint8List
   return byteData!.buffer.asUint8List();
 }
