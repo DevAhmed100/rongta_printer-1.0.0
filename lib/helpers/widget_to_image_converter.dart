@@ -61,7 +61,7 @@ Future<Uint8List> createImageFromWidget(
     ),
     configuration: ViewConfiguration(
       // استخدم geometry بدلًا من size
-      geometry: Rect.fromLTWH(0, 0, docWidth, docHeight),
+      // geometry: Rect.fromLTWH(0, 0, docWidth, docHeight),
       devicePixelRatio: view.devicePixelRatio,
 
       // بعض إصدارات Flutter قد تتطلّب وجود window
