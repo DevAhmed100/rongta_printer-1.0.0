@@ -1,0 +1,71 @@
+group 'com.byshy.rongta_printer'
+version '1.0-SNAPSHOT'
+
+buildscript {
+    // حدّث إصدار Kotlin إلى النسخة المناسبة لك:
+    ext.kotlin_version = '1.8.21'
+    
+    repositories {
+        google()
+        mavenCentral()
+    }
+
+    dependencies {
+        // استخدم الإصدار الذي تريد من Android Gradle Plugin (يجب أن يتوافق مع gradle-8.3)
+        classpath 'com.android.tools.build:gradle:8.3.0'
+        
+        // مكوّن Kotlin Gradle Plugin بنفس إصدار Kotlin المعرّف أعلاه:
+        classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
+    }
+}
+
+// في الإصدارات الأحدث، غالبًا تنقل إعدادات المراجع (repositories) إلى settings.gradle، لكن لا مشكلة في بقائها هنا:
+allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
+}
+
+// هذه مكتبة، لذا نستخدم library وليس application
+apply plugin: 'com.android.library'
+apply plugin: 'kotlin-android'
+
+android {
+    // السطر الإجباري مع AGP 8.0+ لتحديد namespace
+    namespace = "com.byshy.rongta_printer"
+
+    // عدّل رقم الـcompileSdk إلى 33 أو 34
+    compileSdkVersion 34
+
+    defaultConfig {
+        // أقل إصدار مدعوم
+        minSdkVersion 21
+        
+        // (اختياري) إن أردت تحديد targetSdkVersion للمكتبة
+        targetSdkVersion 34
+    }
+
+    // إعدادات التوافق مع Java 8
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    // إذا لديك شيفرة Kotlin في مجلد src/main/kotlin
+    sourceSets {
+        main.java.srcDirs += 'src/main/kotlin'
+    }
+}
+
+dependencies {
+    // تحميل أي ملفات JAR موجودة في مجلد libs
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    
+    // استدعاء المكتبة الرئيسية للطباعة إن وجدت في libs
+    api files('libs/printer_library.jar')
+}
